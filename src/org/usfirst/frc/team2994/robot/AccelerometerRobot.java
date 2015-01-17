@@ -1,14 +1,14 @@
 
 package org.usfirst.frc.team2994.robot;
 
-import java.util.logging.Level;
-
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.SampleRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer;
+import edu.wpi.first.wpilibj.interfaces.Accelerometer.Range;
+import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 
 /**
  * @author Tylar
@@ -26,6 +26,10 @@ public class AccelerometerRobot extends SampleRobot
 	
 	public static final Accelerometer accelerometer = new BuiltInAccelerometer();
 	
+	public static final AccelerometerCalibrated accelerator = new AccelerometerCalibrated();
+	
+	boolean isAcceleratorDone = false;
+	
     public AccelerometerRobot()
     {
     }
@@ -33,7 +37,7 @@ public class AccelerometerRobot extends SampleRobot
     public void robotInit()
     {
     	robotDrive.setExpiration(0.01 * 1.5);
-    	accelerometer.setRange(Accelerometer.Range.k4G);
+    	accelerometer.setRange(Range.k2G);
     }
     
     private void drive(double speed, double time)
@@ -50,21 +54,7 @@ public class AccelerometerRobot extends SampleRobot
     {
     	robotDrive.setSafetyEnabled(false);
     	
-    	Utils.configureRobotLogger();
-    	
-    	drive(-0.3, 1.0);	// 2994-L: Might need to expand drive function and place accelerometer read inside
-    	accelX = accelerometer.getX();
-    	accelY = accelerometer.getY();
-    	accelZ = accelerometer.getZ();
-    	
-    	drive(0.0, 0.0);
-    	
-    	Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer X: " + accelX);
-    	Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer Y: " + accelY);
-    	Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer Z: " + accelZ);
-    	Utils.ROBOT_LOGGER.log(Level.INFO, "\n");
-    	
-    	Utils.closeLogger();
+    	accelerator.calibrate();
     }
 
     /**
@@ -72,21 +62,23 @@ public class AccelerometerRobot extends SampleRobot
      */
     public void operatorControl()
     {
-        robotDrive.setSafetyEnabled(false);
+        robotDrive.setSafetyEnabled(true);
         
         Utils.configureRobotLogger();
+        
+        accelerator.initialize();
         
         while (isOperatorControl() && isEnabled())
         {
             robotDrive.arcadeDrive(joystick);
-            accelX = accelerometer.getX();
-            accelY = accelerometer.getY();
-            accelZ = accelerometer.getZ();
+            accelX = accelerator.getX();
+            accelY = accelerator.getY();
+            accelZ = accelerator.getZ();
             
-            Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer X: " + accelX);
-        	Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer Y: " + accelY);
-        	Utils.ROBOT_LOGGER.log(Level.INFO, "Accelerometer Z: " + accelZ);
-        	Utils.ROBOT_LOGGER.log(Level.INFO, "\n");
+            System.out.println("Accelerometer X: " + accelX);
+            System.out.println("Accelerometer Y: " + accelY);
+            System.out.println("Accelerometer Z: " + accelZ);
+            System.out.println();
             
             Timer.delay(0.005);		// wait for a motor update time
         }
@@ -99,6 +91,11 @@ public class AccelerometerRobot extends SampleRobot
      */
     public void test()
     {
+    	LiveWindow.run();
     }
     
+    /**
+     * Make it so the accelerometer number is tracked over time in entries. Similar to the 
+     * frc driver station's tracking but without being in a graph
+     */
 }
